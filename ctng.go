@@ -11,7 +11,7 @@ import (
 	"CTng/testData/fakeCA"
 	"CTng/testData/fakeLogger"
 	"CTng/Logger"
-	"CTng/Client"
+	"CTng/client"
 	"fmt"
 	"os"
 )

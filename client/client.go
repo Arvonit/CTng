@@ -1,4 +1,5 @@
 package client
+
 import (
 	"fmt"
 	"CTng/util"
@@ -154,7 +155,7 @@ func handleClientRequests(c *ClientContext) {
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
-	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
+	log.Fatal(http.ListenAndServe("localhost:"+c.Config.Port, nil))
 }
 
 
@@ -198,5 +199,3 @@ func StartClientServer(c *ClientContext) {
 	// Start HTTP server loop on the main thread
 	handleClientRequests(c)
 }
-
-

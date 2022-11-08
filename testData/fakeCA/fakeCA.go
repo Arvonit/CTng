@@ -189,5 +189,5 @@ func RunFakeCA(configFile string) {
 	http.Handle("/", gorillaRouter)
 	fmt.Println("Listening on port", config.Port)
 	go periodicTasks()
-	http.ListenAndServe(":"+config.Port, nil)
+	http.ListenAndServe("localhost:"+config.Port, nil)
 }

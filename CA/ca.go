@@ -337,7 +337,7 @@ func handleCARequests(ca *CAContext) {
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
 	fmt.Println("Listening on port", ca.Config.Port)
-	log.Fatal(http.ListenAndServe(":"+ca.Config.Port, nil))
+	log.Fatal(http.ListenAndServe("localhost:"+ca.Config.Port, nil))
 }
 func SendCert(c *CAContext, cert *x509.Certificate){
 	msg, err := json.Marshal(cert)
@@ -446,4 +446,3 @@ func StartCAServer(c *CAContext) {
 	// Start HTTP server loop on the main thread
 	handleCARequests(c)
 }
-

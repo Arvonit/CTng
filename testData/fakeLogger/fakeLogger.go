@@ -158,5 +158,5 @@ func RunFakeLogger(configFile string) {
 	fmt.Println("Listening on port", config.Port)
 	// start the server for editing STHs and serve the STHs
 	go periodicTasks()
-	http.ListenAndServe(":"+config.Port, nil)
+	http.ListenAndServe("localhost:"+config.Port, nil)
 }

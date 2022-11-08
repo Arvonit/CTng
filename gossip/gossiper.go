@@ -72,7 +72,7 @@ func handleRequests(c *GossiperContext) {
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	fmt.Println(util.BLUE+"Listening on port:", c.Config.Port, util.RESET)
-	err := http.ListenAndServe(":"+c.Config.Port, nil)
+	err := http.ListenAndServe("localhost:"+c.Config.Port, nil)
 	// We wont get here unless there's an error.
 	log.Fatal("ListenAndServe: ", err)
 	os.Exit(1)

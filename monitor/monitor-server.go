@@ -34,7 +34,7 @@ func handleMonitorRequests(c *MonitorContext) {
 	// Start the HTTP server.
 	http.Handle("/", gorillaRouter)
 	// Listen on port set by config until server is stopped.
-	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
+	log.Fatal(http.ListenAndServe("localhost:"+c.Config.Port, nil))
 }
 
 func StartMonitorServer(c *MonitorContext) {
