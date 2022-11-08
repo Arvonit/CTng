@@ -29,7 +29,7 @@ func makeFakeSTH(c *config.Gossiper_config) gossip.Gossip_object {
 		Signer:      string(c.Crypto.SelfID),
 		Signature:   [2]string{sig.String(), ""},
 		Timestamp:   gossip.GetCurrentTimestamp(),
-		Payload:     [2]string{payload, ""},
+		// Payload:     [2]string{payload, ""},
 	}
 }
 
@@ -41,11 +41,11 @@ func makeAccusation(c *config.Gossiper_config) gossip.Gossip_object {
 	}
 	return gossip.Gossip_object{
 		Application: "Ctng",
-		Type:        gossip.ACCUSATION_FRAG,
+		// Type:        gossip.ACCUSATION_FRAG,
 		Signer:      string(c.Crypto.SelfID),
 		Signature:   [2]string{sig.String(), ""},
 		Timestamp:   gossip.GetCurrentTimestamp(),
-		Payload:     [2]string{"localhost:8083", ""},
+		// Payload:     [2]string{"localhost:8083", ""},
 	}
 }
 
