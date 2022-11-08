@@ -343,8 +343,13 @@ func PeriodicTasks(c *GossiperContext) {
 }
 
 func InitializeGossiperStorage (c* GossiperContext){
-	c.StorageDirectory = "testData/gossiperdata/"+c.StorageID+"/"
-	c.StorageFile = "GossipStorage.Json"
+	if c.StorageDirectory == "" {
+		c.StorageDirectory = "testData/gossiperdata/"+c.StorageID+"/"
+	}
+	if c.StorageFile == "" {
+		c.StorageFile = "GossipStorage.Json"
+	}
+	
 	util.CreateFile(c.StorageDirectory+c.StorageFile)
 
 }
@@ -353,18 +358,37 @@ func StartGossiperServer(c *GossiperContext) {
 	// Check if the storage file exists in this directory
 	// Only need to store Degree2_PoM
 	InitializeGossiperStorage(c)
-	err := c.LoadStorage()
+	
+	// Old
+	// err := c.LoadStorage()
+	// if err != nil {
+	// 	if strings.Contains(err.Error(), "no such file or directory") {
+	// 		// Storage File doesn't exit. Create new, empty json file.
+	// 		err = c.SaveStorage()
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 	} else {
+	// 		panic(err)
+	// 	}
+	// }
+
+	// NOTE: This function/logic is broken
+	// err := c.LoadStorage()
+	// if err != nil {
+	// 	if strings.Contains(err.Error(), "no such file or directory") {
+	
+	// Storage File doesn't exit. Create new, empty json file.
+	err := c.SaveStorage()
 	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") {
-			// Storage File doesn't exit. Create new, empty json file.
-			err = c.SaveStorage()
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			panic(err)
-		}
+		panic(err)
 	}
+
+	// 	} else {
+	// 		panic(err)
+	// 	}
+	// }
+
 	// Create the http client to be used.
 	// This is thorough and allows for HTTP client configuration,
 	// although we don't need it yet.

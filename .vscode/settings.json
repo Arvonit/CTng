@@ -1,3 +1,6 @@
 {
-    "go.inferGopath": false
+    "go.inferGopath": false,
+    "[go]": {
+        "editor.formatOnSave": false 
+    }
 }

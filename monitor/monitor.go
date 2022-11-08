@@ -382,7 +382,10 @@ func PeriodicTasks(c *MonitorContext) {
 }
 
 func InitializeMonitorStorage(c *MonitorContext){
-	c.StorageDirectory = "testData/monitordata/"+c.StorageID+"/"
+	if c.StorageDirectory == "" {
+		c.StorageDirectory = "testData/monitordata/"+c.StorageID+"/"
+	}
+	
 	c.StorageFile_CONFLICT_POM  = "CONFLICT_POM.json"
 	c.StorageFile_ACCUSATION_POM = "ACCUSATION_POM.json"
 	c.StorageFile_STH_FULL = "STH_FULL.json"
@@ -462,8 +465,9 @@ func Process_valid_object(c *MonitorContext, g gossip.Gossip_object) {
 
 func StartMonitorServer(c *MonitorContext) {
 	// Check if the storage file exists in this directory
-	time_wait := gossip.Getwaitingtime();
-	time.Sleep(time.Duration(time_wait)*time.Second);
+	// time_wait := gossip.Getwaitingtime();
+	// time.Sleep(time.Duration(time_wait)*time.Second);
+	
 	InitializeMonitorStorage(c)
 	err := c.LoadStorage()
 	if err != nil {

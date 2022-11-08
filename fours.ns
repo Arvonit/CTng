@@ -1,0 +1,50 @@
+set ns [new Simulator]
+source tb_compat.tcl
+
+# Setup 4 monitors, gossipers, loggers, and ca nodes
+# And install Ubuntu 20.04 and Go 1.19 on them
+for {set i 1} {$i <= 4} {incr i} {
+    set monitor($i) [$ns node]
+    tb-set-node-os $monitor($i) Ubuntu2004-STD
+    tb-set-node-tarfiles $monitor($i) /usr/local /proj/PKIsec/tarfiles/go.tar.gz
+
+    set gossiper($i) [$ns node]
+    tb-set-node-os $gossiper($i) Ubuntu2004-STD
+    tb-set-node-tarfiles $gossiper($i) /usr/local /proj/PKIsec/tarfiles/go.tar.gz
+
+    set logger($i) [$ns node]
+    tb-set-node-os $logger($i) Ubuntu2004-STD
+    tb-set-node-tarfiles $logger($i) /usr/local /proj/PKIsec/tarfiles/go.tar.gz
+
+    set ca($i) [$ns node]
+    tb-set-node-os $ca($i) Ubuntu2004-STD
+    tb-set-node-tarfiles $ca($i) /usr/local /proj/PKIsec/tarfiles/go.tar.gz
+}
+
+# Setup monitor-gossiper connection
+set m1-g1-connection [$ns duplex-link $monitor(1) $gossiper(1) 10Mb 0ms DropTail]
+set m2-g2-connection [$ns duplex-link $monitor(2) $gossiper(2) 10Mb 0ms DropTail]
+set m3-g3-connection [$ns duplex-link $monitor(3) $gossiper(3) 10Mb 0ms DropTail]
+set m4-g4-connection [$ns duplex-link $monitor(4) $gossiper(4) 10Mb 0ms DropTail]
+
+# Setup inter-gossiper connection
+set g1-g2-connection [$ns duplex-link $gossiper(1) $gossiper(2) 10Mb 0ms DropTail]
+set g1-g3-connection [$ns duplex-link $gossiper(1) $gossiper(3) 10Mb 0ms DropTail]
+set g2-g3-connection [$ns duplex-link $gossiper(2) $gossiper(3) 10Mb 0ms DropTail]
+set g2-g4-connection [$ns duplex-link $gossiper(2) $gossiper(4) 10Mb 0ms DropTail]
+set g3-g4-connection [$ns duplex-link $gossiper(3) $gossiper(4) 10Mb 0ms DropTail]
+set g4-g1-connection [$ns duplex-link $gossiper(4) $gossiper(1) 10Mb 0ms DropTail]
+
+# Setup monitor-logger-CA connection
+set m1-l1-connection [$ns duplex-link $monitor(1) $logger(1) 10Mb 0ms DropTail]
+set m1-c1-connection [$ns duplex-link $monitor(1) $ca(1) 10Mb 0ms DropTail]
+set m2-l2-connection [$ns duplex-link $monitor(2) $logger(2) 10Mb 0ms DropTail]
+set m2-c2-connection [$ns duplex-link $monitor(2) $ca(2) 10Mb 0ms DropTail]
+set m3-l3-connection [$ns duplex-link $monitor(3) $logger(3) 10Mb 0ms DropTail]
+set m3-c3-connection [$ns duplex-link $monitor(3) $ca(3) 10Mb 0ms DropTail]
+set m4-l4-connection [$ns duplex-link $monitor(4) $logger(4) 10Mb 0ms DropTail]
+set m4-c4-connection [$ns duplex-link $monitor(4) $ca(4) 10Mb 0ms DropTail]
+
+# Go!
+$ns rtproto Static
+$ns run
