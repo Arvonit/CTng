@@ -13,6 +13,7 @@ import (
 	"os"
 	"github.com/gorilla/mux"
 	"time"
+	"math/rand"
 )
 
 type Gossiper interface {
@@ -127,6 +128,10 @@ func handleGossip(c *GossiperContext, w http.ResponseWriter, r *http.Request) {
 // Sends a gossip object to all connected gossipers.
 // This function assumes you are passing valid data. ALWAYS CHECK BEFORE CALLING THIS FUNCTION.
 func GossipData(c *GossiperContext, gossip_obj Gossip_object) error {
+	//desync
+	rand.Seed(time.Now().UnixNano())
+    n := rand.Intn(1000) // n will be between 0 and 10
+    time.Sleep(time.Duration(n)*time.Millisecond)
 	// Convert gossip object to JSON
 	msg, err := json.Marshal(gossip_obj)
 	if err != nil {
