@@ -21,66 +21,21 @@ func QueryMonitor() {
 	}
 
 	fmt.Printf("monitor id: %v\n", res.MonitorID)
-	fmt.Printf("period: %v\n", res.Period)
-	fmt.Printf("\nsth: %v\n", res.STHs)
-	fmt.Printf("\nrev: %v\n", res.REVs)
-	fmt.Printf("\nacc: %v\n", res.CONs)
-	fmt.Printf("\ncon: %v\n", res.CONs)
+	fmt.Printf("period: %v\n\n", res.Period)
+	fmt.Printf("sth: %v\n\n", res.STHs)
+	fmt.Printf("rev: %v\n\n", res.REVs)
+	fmt.Printf("acc: %v\n\n", res.ACCs)
+	fmt.Printf("con: %v\n\n", res.CONs)
 
-	fmt.Printf("\nnum: %v\n", res.NUM)
-	fmt.Printf("\nnum full: %v\n", res.NUM_FULL)
+	fmt.Printf("num: %v\n\n", res.NUM)
+	fmt.Printf("num full: %v\n\n", res.NUM_FULL)
 
-	fmt.Printf("\nsth root hash:\n%v\n", GetRootHash(res.STHs))
-	fmt.Printf("\nrev delta crv: %v\n", GetDeltaCRV(res.REVs))
-	fmt.Printf("\nrev srh value: %v\n", GetSRH(res.REVs))
+	fmt.Printf("sth root hash:\n%v\n\n", GetRootHash(res.STHs))
+	fmt.Printf("rev delta crv: %v\n\n", GetDeltaCRV(res.REVs))
+	fmt.Printf("rev srh value: %v\n", GetSRH(res.REVs))
+	// fmt.Printf("rev payload: %v\n\n", GetPayload(res.REVs))
 	
 	SaveClientUpdate(&res)
-}
-
-func SaveClientUpdate(update *monitor.ClientUpdate) {
-	// Store client update in a local folder (miniclient/data/update_{period}.json)
-	err := os.MkdirAll("miniclient/data/", os.ModePerm)
-	if err != nil {
-		fmt.Printf("Unable to create data folder to store updates")
-	}
-	util.WriteData("miniclient/data/update_"+update.Period+".json", update)
-}
-
-// Deprecated: These endpoints have been removed from the monitor
-func QueryMonitorOldEndpoints() {
-	// monitorURL := "http://localhost:3000"
-	// backupMonitorURL := "http://localhost:3001"
-
-	res, err := FetchGossip("http://localhost:3000/sth")
-	sthNumPeriods := len(res)
-	if err != nil {
-		fmt.Printf("sth err: %v\n", err)
-	} else {
-		fmt.Printf("sth: %v\n", res)
-	}
-
-	res, err = FetchGossip("http://localhost:3000/rev")
-	revNumPeriods := len(res)
-	if err != nil {
-		fmt.Printf("rev err: %v\n", err)
-	} else {
-		fmt.Printf("rev: %v\n", res)
-		fmt.Printf("rev delta crv: %s\n", GetDeltaCRV(res))
-		fmt.Printf("rev num periods: %d\n", revNumPeriods)
-	}
-
-	res, err = FetchGossip("http://localhost:3000/pom")
-	pomNumPeriods := len(res)
-	if err != nil {
-		fmt.Printf("pom err: %v\n", err)
-	} else {
-		fmt.Printf("pom: %v\n", res)
-		fmt.Printf("pom num periods: %v\n", pomNumPeriods)
-	}
-
-	// TODO: Query another monitor?
-	if (sthNumPeriods == revNumPeriods) && (sthNumPeriods == pomNumPeriods) {
-	}
 }
 
 func QueryServer() {
@@ -104,4 +59,13 @@ func QueryServer() {
 	} else {
 		fmt.Printf("pom cert: %v\n", cert.Subject)
 	}
+}
+
+func SaveClientUpdate(update *monitor.ClientUpdate) {
+	// Store client update in a local folder (miniclient/data/update_{period}.json)
+	err := os.MkdirAll("miniclient/data/", os.ModePerm)
+	if err != nil {
+		fmt.Printf("Unable to create data folder to store updates")
+	}
+	util.WriteData("miniclient/data/update_"+update.Period+".json", update)
 }
