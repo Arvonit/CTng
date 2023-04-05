@@ -530,18 +530,19 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		fmt.Println("partial sig conversion error (from string)")
 		return err
 	}
-	//If there is already an TSS Object
+	//lock
 	gc.RWlock.Lock()
+	//If there is already an TSS Object
 	if _, ok := (*gc.Storage_FULL)[newkey]; ok {
 		//fmt.Println(util.BLUE + "There already exists a " + TypeString(target_type) + " Object" + util.RESET)
 		gc.RWlock.Unlock()
 		return nil
+
 	}
 	gc.RWlock.Unlock()
 	//If there isn't a STH_FULL Object yet, but there exists some other sth_frag
 	gc.RWlock.Lock()
 	if val, ok := (*gc.Obj_TSS_DB)[key]; ok {
-		gc.RWlock.Unlock()
 		val.Signers[val.Num] = new_obj.Signer
 		if err != nil {
 			fmt.Println("partial sig conversion error (from string)")
@@ -549,9 +550,12 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 		}
 		val.Partial_sigs[val.Num] = p_sig
 		val.Num = val.Num + 1
+		gc.RWlock.Unlock()
 		//fmt.Println("Finished updating Counters, the new number is", val.Num)
 		//now we check if the number of sigs have reached the threshold
+		gc.RWlock.Lock()
 		if val.Num >= c.Threshold {
+			gc.RWlock.Unlock()
 			TSS_sig, _ := c.ThresholdAggregate(val.Partial_sigs)
 			TSS_sig_string, _ := TSS_sig.String()
 			sigfield := new([2]string)
@@ -585,6 +589,7 @@ func Process_TSS_Object(gc *GossiperContext, new_obj Gossip_object, target_type 
 			SendToOwner(gc, TSS_FULL_obj)
 			return nil
 		}
+		gc.RWlock.Unlock()
 	}
 	gc.RWlock.Unlock()
 	//if the this is the first STH_FRAG received

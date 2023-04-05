@@ -1,27 +1,9 @@
 {
-  "33": {
+  "13": {
     "Gossiper_URL": "localhost:8080",
-    "Period": "33",
+    "Period": 13,
     "Num_sth": 3,
     "Num_rev": 3,
-    "Num_acc": 0,
-    "Num_con": 0,
-    "Num_sth_frag": 0,
-    "Num_rev_frag": 0,
-    "Num_acc_frag": 0,
-    "Num_con_frag": 0,
-    "Num_STH_FULL": 0,
-    "Num_REV_FULL": 0,
-    "Num_ACC_FULL": 0,
-    "Num_CON_FULL": 0,
-    "Num_NUM": 0,
-    "Num_NUM_FRAG": 0
-  },
-  "34": {
-    "Gossiper_URL": "localhost:8080",
-    "Period": "34",
-    "Num_sth": 6,
-    "Num_rev": 6,
     "Num_acc": 0,
     "Num_con": 0,
     "Num_sth_frag": 12,
@@ -32,14 +14,14 @@
     "Num_REV_FULL": 3,
     "Num_ACC_FULL": 0,
     "Num_CON_FULL": 0,
-    "Num_NUM": 1,
-    "Num_NUM_FRAG": 4
+    "Num_NUM": 0,
+    "Num_NUM_FRAG": 0
   },
-  "35": {
+  "14": {
     "Gossiper_URL": "localhost:8080",
-    "Period": "35",
-    "Num_sth": 6,
-    "Num_rev": 6,
+    "Period": 14,
+    "Num_sth": 3,
+    "Num_rev": 3,
     "Num_acc": 0,
     "Num_con": 0,
     "Num_sth_frag": 12,
@@ -51,13 +33,13 @@
     "Num_ACC_FULL": 0,
     "Num_CON_FULL": 0,
     "Num_NUM": 1,
-    "Num_NUM_FRAG": 4
+    "Num_NUM_FRAG": 2
   },
-  "36": {
+  "15": {
     "Gossiper_URL": "localhost:8080",
-    "Period": "36",
-    "Num_sth": 6,
-    "Num_rev": 6,
+    "Period": 15,
+    "Num_sth": 3,
+    "Num_rev": 3,
     "Num_acc": 0,
     "Num_con": 0,
     "Num_sth_frag": 12,
@@ -69,6 +51,6 @@
     "Num_ACC_FULL": 0,
     "Num_CON_FULL": 0,
     "Num_NUM": 1,
-    "Num_NUM_FRAG": 4
+    "Num_NUM_FRAG": 2
   }
 }

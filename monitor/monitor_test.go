@@ -61,7 +61,7 @@ func testPanicOnBadReceiveGossip(t *testing.T) {
 	t.Errorf("Expected panic")
 }
 
-func TestPrepareClientupdate(t *testing.T) {
+func testPrepareClientupdate(t *testing.T) {
 	// TODO
 	ctx_monitor_1 := InitializeMonitorContext("../Gen/monitor_testconfig/1/Monitor_public_config.json", "../Gen/monitor_testconfig/1/Monitor_private_config.json", "../Gen/monitor_testconfig/1/Monitor_crypto_config.json", "1")
 	update, err := PrepareClientUpdate(ctx_monitor_1, "../client_test/ClientData/Period 0/FromMonitor/ClientUpdate_at_Period 0.json")
@@ -98,4 +98,39 @@ func testMonitorServer(t *testing.T) {
 	//over write ctx_monitor_1.Mode to 1 if you want to test the monitor server without waiting
 	ctx_monitor_1.Mode = 1
 	StartMonitorServer(ctx_monitor_1)
+}
+
+func TestNUM(t *testing.T) {
+	ctx_monitor_1 := InitializeMonitorContext("../network/monitor_testconfig/1/Monitor_public_config.json", "../network/monitor_testconfig/1/Monitor_private_config.json", "../Gen/monitor_testconfig/1/Monitor_crypto_config.json", "1")
+	ctx_gossiper_1 := gossip.InitializeGossiperContext("../network/gossiper_testconfig/1/Gossiper_public_config.json", "../network/gossiper_testconfig/1/Gossiper_private_config.json", "../Gen/gossiper_testconfig/1/Gossiper_crypto_config.json", "1")
+	ctx_gossiper_2 := gossip.InitializeGossiperContext("../network/gossiper_testconfig/2/Gossiper_public_config.json", "../network/gossiper_testconfig/2/Gossiper_private_config.json", "../Gen/gossiper_testconfig/2/Gossiper_crypto_config.json", "2")
+	num_1 := gossip.NUM{
+		NUM_ACC_FULL:   "0",
+		NUM_CON_FULL:   "0",
+		Period:         "0",
+		Signer_Monitor: ctx_monitor_1.Config.Crypto.SelfID.String(),
+		Crypto_Scheme:  "rsa",
+	}
+	signature, _ := ctx_monitor_1.Config.Crypto.Sign([]byte(num_1.NUM_ACC_FULL + num_1.NUM_CON_FULL + num_1.Period + num_1.Signer_Monitor))
+	num_1.Signature = signature.String()
+	err := num_1.Verify(ctx_gossiper_1.Config.Crypto)
+	if err != nil {
+		fmt.Println(err)
+	}
+	num_frag_1 := gossip.Generate_NUM_FRAG(&num_1, ctx_gossiper_1.Config.Crypto)
+	err = num_frag_1.Verify(ctx_gossiper_2.Config.Crypto)
+	if err != nil {
+		fmt.Println(err)
+	}
+	num_frag_2 := gossip.Generate_NUM_FRAG(&num_1, ctx_gossiper_2.Config.Crypto)
+	err = num_frag_2.Verify(ctx_gossiper_1.Config.Crypto)
+	if err != nil {
+		fmt.Println(err)
+	}
+	num_frag_list := []*gossip.NUM_FRAG{num_frag_1, num_frag_2}
+	num_full := gossip.Generate_NUM_FULL(num_frag_list, ctx_gossiper_1.Config.Crypto)
+	err = num_full.Verify(ctx_gossiper_1.Config.Crypto)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

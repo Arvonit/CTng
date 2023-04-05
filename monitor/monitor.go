@@ -97,7 +97,7 @@ func handle_num_full(c *MonitorContext, w http.ResponseWriter, r *http.Request) 
 	/*
 		err = num_full.Verify(c.Config.Crypto)
 		if err != nil {
-			fmt.Println("Recieved invalid object from " + util.GetSenderURL(r) + ".")
+			fmt.Println("Recieved invalid NUM_FULL from " + util.GetSenderURL(r) + ".")
 			http.Error(w, err.Error(), http.StatusOK)
 			return
 		}

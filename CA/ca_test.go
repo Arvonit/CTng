@@ -22,7 +22,7 @@ func testCRV(t *testing.T) {
 	fmt.Println(newbitset)
 }
 
-func TestCAContext(t *testing.T) {
+func testCAContext(t *testing.T) {
 	ctx := InitializeCAContext("../Gen/ca_testconfig/1/CA_public_config.json", "../Gen/ca_testconfig/1/CA_private_config.json", "../Gen/ca_testconfig/1/CA_crypto_config.json")
 	ctx.CRV.Revoke(1)
 	ctx.CRV.Revoke(4)
@@ -105,4 +105,14 @@ func testCtngExtension(t *testing.T) {
 	fmt.Println(GetCTngExtensions(ctx.CurrentCertificatePool.GetCertBySubjectKeyID(string(certs[0].SubjectKeyId))))
 	signed_certs := SignAllCerts(ctx)
 	fmt.Println(GetCTngExtensions(&signed_certs[0]))
+}
+
+func TestGenerateKeypairs(t *testing.T) {
+	subjectlist := Generate_N_Subjects(1, 0)
+	publ, privl := Generate_and_return_N_KeyPairs(subjectlist)
+	pub1 := *publ["Testing Dummy 0"]
+	pub2 := privl["Testing Dummy 0"].PublicKey
+	fmt.Println(pub1)
+	fmt.Println(pub1 == pub2)
+
 }

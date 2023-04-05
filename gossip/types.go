@@ -4,6 +4,7 @@ import (
 	"CTng/config"
 	"CTng/crypto"
 	"CTng/util"
+	"strconv"
 
 	//"encoding/json"
 	"fmt"
@@ -78,7 +79,7 @@ type GossiperContext struct {
 
 type GossiperLogEntry struct {
 	Gossiper_URL string
-	Period       string
+	Period       int
 	Num_sth      int
 	Num_rev      int
 	Num_acc      int
@@ -256,9 +257,10 @@ func CountStorage(gs *Gossip_Storage, entry *GossiperLogEntry) {
 
 // Saves the Storage object to the value in c.StorageFile.
 func (c *GossiperContext) SaveStorage() error {
+	period, _ := strconv.Atoi(GetCurrentPeriod())
 	newentry := GossiperLogEntry{
 		Gossiper_URL: c.Config.Crypto.SelfID.String(),
-		Period:       GetCurrentPeriod(),
+		Period:       period,
 		Num_sth:      0,
 		Num_rev:      0,
 		Num_acc:      0,
@@ -288,16 +290,12 @@ func (c *GossiperContext) SaveStorage() error {
 }
 func WipeOneGS(g *Gossip_Storage) {
 	for key := range *g {
-		if key.Period != GetCurrentPeriod() {
-			delete(*g, key)
-		}
+		delete(*g, key)
 	}
 }
 func WipeOneGSC(g *Gossip_Storage_Counter) {
 	for key := range *g {
-		if key.Period != GetCurrentPeriod() {
-			delete(*g, key)
-		}
+		delete(*g, key)
 	}
 }
 

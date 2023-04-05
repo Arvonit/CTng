@@ -114,7 +114,7 @@ func (n *NUM_FULL) Verify(cryptoconf *crypto.CryptoConfig) error {
 // generate NUM_FRAG wil be a gossiper function
 func Generate_NUM_FRAG(n *NUM, cryptoconf *crypto.CryptoConfig) *NUM_FRAG {
 	// Generate a signature fragment
-	sig, _ := cryptoconf.ThresholdSign(n.NUM_ACC_FULL + n.NUM_CON_FULL + n.Period + n.Signer_Monitor)
+	sig, _ := cryptoconf.ThresholdSign(n.NUM_ACC_FULL + n.NUM_CON_FULL + n.Period)
 	return &NUM_FRAG{
 		NUM_ACC_FULL:    n.NUM_ACC_FULL,
 		NUM_CON_FULL:    n.NUM_CON_FULL,
@@ -148,6 +148,9 @@ func Generate_NUM_FULL(NUM_FRAG_LIST []*NUM_FRAG, cryptoconf *crypto.CryptoConfi
 }
 
 func IsDuplicateNUM(c GossiperContext, num any) bool {
+	//Lock
+	c.NUM_Storage.NUMs_lock.Lock()
+	defer c.NUM_Storage.NUMs_lock.Unlock()
 	switch num.(type) {
 	case *NUM:
 		// check if the num is in the NUM_Storage
@@ -188,33 +191,59 @@ func IsDuplicateNUM(c GossiperContext, num any) bool {
 	return false
 }
 
+func Need_More_NUM_FRAG(c GossiperContext) bool {
+	c.NUM_Storage.NUMs_lock.Lock()
+	if len(c.NUM_Storage.NUM_FRAGs) < c.Config.Crypto.Threshold {
+		c.NUM_Storage.NUMs_lock.Unlock()
+		return true
+	}
+	c.NUM_Storage.NUMs_lock.Unlock()
+	return false
+}
 func handleNUM(g *GossiperContext, w http.ResponseWriter, r *http.Request) {
 	// get the num from the request
 	decoder := json.NewDecoder(r.Body)
 	var num NUM
 	err := decoder.Decode(&num)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	// check if the num is duplicate
 	if IsDuplicateNUM(*g, &num) {
 		return
 	}
+	// check if there are threshold number of num_frags already
+	if !Need_More_NUM_FRAG(*g) {
+		return
+	}
 	// verify the num
-	/*
-		err = num.Verify(g.Config.Crypto)
-		if err != nil {
-			panic(err)
-		}
-	*/
+	err = num.Verify(g.Config.Crypto)
+	if err != nil {
+		panic(err)
+	}
 	g.NUM_Storage.Add_NUM(&num)
 	Gossip_NUM_type(*g, &num)
 	if g.NUM_Storage.Get_NUM(&num) >= g.Config.Crypto.Threshold {
 		// generate NUM_FRAG
 		num_frag := Generate_NUM_FRAG(&num, g.Config.Crypto)
 		// send NUM_FRAG to all gossiper
-		g.NUM_Storage.Add_NUM(num_frag)
 		Gossip_NUM_type(*g, num_frag)
+		if !IsDuplicateNUM(*g, num_frag) && Need_More_NUM_FRAG(*g) {
+			g.NUM_Storage.Add_NUM(num_frag)
+			if g.NUM_Storage.Get_NUM(num_frag) >= g.Config.Crypto.Threshold {
+				// generate NUM_FULL
+				num_full := Generate_NUM_FULL(g.NUM_Storage.NUM_FRAGs, g.Config.Crypto)
+				// send NUM_FULL to all gossiper
+				Gossip_NUM_type(*g, num_full)
+				if !IsDuplicateNUM(*g, num_full) {
+					g.NUM_Storage.Add_NUM(num_full)
+					g.NUM_Storage.NUM_FULL = true
+					// send NUM_FULL to the monitor
+					Gossip_NUM_type(*g, num_full)
+				}
+			}
+		}
 	}
 }
 
@@ -224,28 +253,28 @@ func handleNUM_FRAG(g *GossiperContext, w http.ResponseWriter, r *http.Request) 
 	var num_frag NUM_FRAG
 	err := decoder.Decode(&num_frag)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	// check if the num_frag is duplicate
 	if IsDuplicateNUM(*g, &num_frag) {
 		return
 	}
 	// check if there are threshold number of num_frags already
-	if len(g.NUM_Storage.NUM_FRAGs) >= g.Config.Crypto.Threshold {
+	if !Need_More_NUM_FRAG(*g) {
 		return
 	}
-	// check if the NUM_FULL is already generated
+	// check if the NUM_FULL is already present
 	if g.NUM_Storage.NUM_FULL {
 		return
 	}
 	// verify the num_frag
-	/*
-		err = num_frag.Verify(g.Config.Crypto)
-		if err != nil {
-			panic(err)
-		}*/
+	err = num_frag.Verify(g.Config.Crypto)
+	if err != nil {
+		panic(err)
+	}
 	g.NUM_Storage.Add_NUM(&num_frag)
-	if g.NUM_Storage.Get_NUM(&num_frag) >= g.Config.Crypto.Threshold {
+	if g.NUM_Storage.Get_NUM(&num_frag) == g.Config.Crypto.Threshold {
 		// generate NUM_FULL
 		num_full := Generate_NUM_FULL(g.NUM_Storage.NUM_FRAGs, g.Config.Crypto)
 		// send NUM_FULL to all monitor
@@ -261,18 +290,18 @@ func handleNUM_FULL(g *GossiperContext, w http.ResponseWriter, r *http.Request) 
 	var num_full NUM_FULL
 	err := decoder.Decode(&num_full)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	// check if the num_full is duplicate
 	if IsDuplicateNUM(*g, &num_full) {
 		return
 	}
 	// verify the num_full
-	/*
-		err = num_full.Verify(g.Config.Crypto)
-		if err != nil {
-			panic(err)
-		}*/
+	err = num_full.Verify(g.Config.Crypto)
+	if err != nil {
+		panic(err)
+	}
 	// if NUM_FULL in NUM_Storage is empty, then send it to owner
 	if !g.NUM_Storage.NUM_FULL {
 		// send NUM_FULL to owner
