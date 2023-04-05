@@ -6,8 +6,8 @@ import (
 	"CTng/util"
 	"crypto/x509"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 
 	//"io/ioutil"
 	"CTng/crypto"
@@ -15,9 +15,6 @@ import (
 	"CTng/monitor"
 	"encoding/json"
 	"errors"
-	"time"
-
-	"github.com/gorilla/mux"
 )
 
 type ProofOfInclusion struct {
@@ -39,60 +36,15 @@ func bindClientContext(context *ClientContext, fn func(context *ClientContext, w
 	}
 }
 
-// post method
-// We ask the monitor to post the update by giving them the last update period
-// the monitor will then send us all the missing updates
-// it will go to next monitor if the default update monitor is at fault or is not responding
-func QueryMonitors(c *ClientContext) {
-	/*
-		// Convert gossip object to JSON
-		Newquery := monitor.Clientquery{
-			Client_URL: c.Config.Client_URL,
-			LastUpdatePeriod: c.LastUpdatePeriod,
-		}
-		msg, _ := json.Marshal(Newquery)
-		// HTTP POST the data to the url or IP address.
-		resp, err := c.Client.Post("http://"+c.Config.Default_update_monitor+"/monitor/get-updates", "application/json", bytes.NewBuffer(msg))
-		fmt.Println(util.GREEN+"Query sent to the monitor: ",  c.Config.Default_update_monitor,"at",gossip.GetCurrentPeriod(),util.RESET)
-		if err != nil {
-			for _, url := range  c.Config.Monitor_URLs {
-				//fmt.Println("Attempting to sending data to", url)
-				// HTTP POST the data to the url or IP address.
-				_, err := c.Client.Post("http://"+url+"/monitor/get-updates", "application/json", bytes.NewBuffer(msg))
-				if err != nil {
-					if strings.Contains(err.Error(), "Client.Timeout") ||
-						strings.Contains(err.Error(), "connection refused") {
-						fmt.Println(util.RED+"Connection failed to "+url+".", util.RESET)
-					} else {
-						fmt.Println(util.RED+err.Error(), "sending to "+url+".", util.RESET)
-					}
-					continue
-				}else{
-					break
-				}
-			}
-		}else{
-			//fmt.Println(util.GREEN+"Query sent to the monitor: ",  c.Config.Default_update_monitor,"at",gossip.GetCurrentPeriod(),util.RESET)
-			defer resp.Body.Close()
-		}
-	*/
-}
+func HandleUpdate(c *ClientContext, update monitor.ClientUpdate) {
 
-func Handleupdates(c *ClientContext, w http.ResponseWriter, r *http.Request) {
-	var update monitor.ClientUpdate
-	err := json.NewDecoder(r.Body).Decode(&update)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		fmt.Println("Json decoding failed")
-		return
-	}
 	fmt.Println(util.GREEN + update.Period + util.RESET)
 	fmt.Println(util.GREEN+"update received at ", update.Period, util.RESET)
 	HandleSTHs(c, &update.STHs)
 	HandleREVs(c, &update.REVs)
 	HandleACCs(c, &update.ACCs)
 	HandleCONs(c, &update.CONs)
-	err = update.NUM.Verify(c.Config.Crypto)
+	err := update.NUM.Verify(c.Config.Crypto)
 	if err != nil {
 		//handle this
 	}
@@ -242,75 +194,101 @@ func VerifyPoMs(c *ClientContext, poms *gossip.Gossip_Storage, sig string) error
 	return result
 }
 
-func handleClientRequests(c *ClientContext) {
-	// MUX which routes HTTP directories to functions.
-	gorillaRouter := mux.NewRouter().StrictSlash(true)
-	// POST functions
-	gorillaRouter.HandleFunc("/receive-updates", bindClientContext(c, Handleupdates)).Methods("POST")
-	gorillaRouter.HandleFunc("/receive-conviction", bindClientContext(c, Handleconviction)).Methods("POST")
-	gorillaRouter.HandleFunc("/receive-cert", bindClientContext(c, Handlesubjects)).Methods("Get")
-	// Start the HTTP server.
-	http.Handle("/", gorillaRouter)
-	// Listen on port set by config until server is stopped.
-	log.Fatal(http.ListenAndServe(":"+c.Config.Port, nil))
+func Start(c *ClientContext) {
+	QueryMonitor(c)
+	fmt.Println()
+	QueryServer(c)
 }
 
-// will finish these 2 after the client is working as intended
-func Handlesubjects(c *ClientContext, w http.ResponseWriter, r *http.Request) {
-	var cert x509.Certificate
-	err := json.NewDecoder(r.Body).Decode(&cert)
+func QueryMonitor(c *ClientContext) {
+	res, err := FetchClientUpdate("http://localhost:3000/?period=3")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Printf("client update err: %v\n", err)
 		return
 	}
-	err = checkCertAgainstPOMList(cert, c.Storage_CONFLICT_POM)
+
+	fmt.Printf("monitor id: %v\n", res.MonitorID)
+	fmt.Printf("period: %v\n", res.Period)
+	fmt.Printf("\nsth: %v\n", res.STHs)
+	fmt.Printf("\nrev: %v\n", res.REVs)
+	fmt.Printf("\nacc: %v\n", res.CONs)
+	fmt.Printf("\ncon: %v\n", res.CONs)
+
+	fmt.Printf("\nnum: %v\n", res.NUM)
+	fmt.Printf("\nnum full: %v\n", res.NUM_FULL)
+
+	fmt.Printf("\nsth root hash:\n%v\n", GetRootHash(res.STHs))
+	fmt.Printf("\nrev delta crv: %v\n", GetDeltaCRV(res.REVs))
+	fmt.Printf("\nrev srh value: %v\n", GetSRH(res.REVs))
+	HandleUpdate(c, res)
+	SaveClientUpdate(&res)
+}
+
+func SaveClientUpdate(update *monitor.ClientUpdate) {
+	// Store client update in a local folder (miniclient/data/update_{period}.json)
+	err := os.MkdirAll("miniclient/data/", os.ModePerm)
 	if err != nil {
-		//handle rejection
+		fmt.Printf("Unable to create data folder to store updates")
 	}
-	err = verifySignatures(c, cert, c.Storage_CONFLICT_POM, c.Storage_ACCUSATION_POM, c.Storage_STH_FULL, c.Storage_REV_FULL)
+	util.WriteData("miniclient/data/update_"+update.Period+".json", update)
+}
+
+// Deprecated: These endpoints have been removed from the monitor
+func QueryMonitorOldEndpoints() {
+	// monitorURL := "http://localhost:3000"
+	// backupMonitorURL := "http://localhost:3001"
+
+	res, err := FetchGossip("http://localhost:3000/sth")
+	sthNumPeriods := len(res)
 	if err != nil {
-		//handleRejection
+		fmt.Printf("sth err: %v\n", err)
+	} else {
+		fmt.Printf("sth: %v\n", res)
 	}
-	ctngExtension := Parse_CTng_extension(&cert)
-	var loggerSTH Logger.STH
-	//payload[1] holds marshalled logger STH
-	json.Unmarshal([]byte(ctngExtension.STH.Payload[1]), &loggerSTH)
-	if !verifyPOI(loggerSTH, ctngExtension.POI, cert) {
-		//handle POI verification failed
+
+	res, err = FetchGossip("http://localhost:3000/rev")
+	revNumPeriods := len(res)
+	if err != nil {
+		fmt.Printf("rev err: %v\n", err)
+	} else {
+		fmt.Printf("rev: %v\n", res)
+		fmt.Printf("rev delta crv: %s\n", GetDeltaCRV(res))
+		fmt.Printf("rev num periods: %d\n", revNumPeriods)
+	}
+
+	res, err = FetchGossip("http://localhost:3000/pom")
+	pomNumPeriods := len(res)
+	if err != nil {
+		fmt.Printf("pom err: %v\n", err)
+	} else {
+		fmt.Printf("pom: %v\n", res)
+		fmt.Printf("pom num periods: %v\n", pomNumPeriods)
+	}
+
+	// TODO: Query another monitor?
+	if (sthNumPeriods == revNumPeriods) && (sthNumPeriods == pomNumPeriods) {
 	}
 }
 
-func Handleconviction(c *ClientContext, w http.ResponseWriter, r *http.Request) {
-}
-
-func PeriodicTasks(c *ClientContext) {
-	// Immediately queue up the next task to run at next MMD.
-	// Doing this first means: no matter how long the rest of the function takes,
-	// the next call will always occur after the correct amount of time.
-	f := func() {
-		PeriodicTasks(c)
+func QueryServer(c *ClientContext) {
+	cert, err := FetchCertificate("https://localhost:8000")
+	if err != nil {
+		fmt.Printf("normal cert err: %v\n", err)
+	} else {
+		fmt.Printf("normal cert: %v\n", cert.Subject)
 	}
-	time.AfterFunc(time.Duration(c.Config.MMD)*time.Second, f)
-	// Run the periodic tasks.
-	QueryMonitors(c)
-	//wait for some time (after all the monitor-gossip system converges)
-	//time.Sleep(10*time.Second);
-}
 
-func StartClientServer(c *ClientContext) {
-	//Warning: the time wait here is hard coded to be 10 seconds after the beginning of each period
-	//will need to be adjusted according to the network delay
-	fmt.Println("Client sleeping and waiting")
-	//time_wait := gossip.Getwaitingtime()+10;
-	//time.Sleep(time.Duration(time_wait)*time.Second);
-	fmt.Println("Client Initiated")
-	c.LastUpdatePeriod = "0"
-	tr := &http.Transport{}
-	c.Client = &http.Client{
-		Transport: tr,
+	cert, err = FetchCertificate("https://localhost:8001")
+	if err != nil {
+		fmt.Printf("revoked cert err: %v\n", err)
+	} else {
+		fmt.Printf("revoked cert: %v\n", cert.Subject)
 	}
-	// Run a go routine to handle tasks that must occur every MMD
-	go PeriodicTasks(c)
-	// Start HTTP server loop on the main thread
-	handleClientRequests(c)
+
+	cert, err = FetchCertificate("https://localhost:8002")
+	if err != nil {
+		fmt.Printf("pom cert err: %v\n", err)
+	} else {
+		fmt.Printf("pom cert: %v\n", cert.Subject)
+	}
 }

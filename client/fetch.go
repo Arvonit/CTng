@@ -1,4 +1,4 @@
-package miniclient
+package client
 
 import (
 	"CTng/gossip"
@@ -39,7 +39,7 @@ func FetchGossip(url string) (MonitorData, error) {
 
 // Get the x509 certificate from the given url
 func FetchCertificate(url string) (x509.Certificate, error) {
-	// CTng certificates, having been created by our own CA, will not pass TLS verification, so we 
+	// CTng certificates, having been created by our own CA, will not pass TLS verification, so we
 	// must disable it
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
