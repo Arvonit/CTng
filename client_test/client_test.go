@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -116,8 +117,16 @@ func ca_logger_setup(Period int) {
 		ncp, privmap := CA.Generate_N_Signed_PreCert_with_priv(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+21*(Period))
 		//ncp := CA.Generate_N_Signed_PreCert(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+ 21*(Period))
 		// iterate over privmap and append to PrivPool
-		for _, v := range privmap {
-			PrivPool[i] = append(PrivPool[i], v)
+		//extract the keys from the map
+		keys := make([]string, 0, len(privmap))
+		for k := range privmap {
+			keys = append(keys, k)
+		}
+		//sort the keys
+		sort.Strings(keys)
+		//iterate over the keys and append the values to PrivPool
+		for _, k := range keys {
+			PrivPool[i] = append(PrivPool[i], privmap[k])
 		}
 		Precert_pool[i] = append(Precert_pool[i], ncp...)
 		for j := 0; j < len(Precert_pool[i]); j++ {
@@ -388,37 +397,42 @@ func Test_CA_Logger(t *testing.T) {
 		for j := 0; j < 7; j++ {
 			// write the certificate to /ClientData/Period 0/FromWebserver
 			certsaved := SignedCertPool[i][j]
+			keysaved := PrivPool[i][j]
 			filename := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".crt"
+			filename2 := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".key"
 			derbytes := certsaved.Raw
 			saveCertificateToDisk(derbytes, "ClientData/Period 0/FromWebserver/"+filename)
+			saveKeyToDisk(keysaved, "ClientData/Period 0/FromWebserver/"+filename2)
 		}
 		for j := 7; j < 14; j++ {
 			// write the certificate to /ClientData/Period 0/FromWebserver
 			certsaved := SignedCertPool[i][j]
+			keysaved := PrivPool[i][j]
 			filename := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".crt"
+			filename2 := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".key"
 			derbytes := certsaved.Raw
 			saveCertificateToDisk(derbytes, "ClientData/Period 1/FromWebserver/"+filename)
+			saveKeyToDisk(keysaved, "ClientData/Period 1/FromWebserver/"+filename2)
 		}
 		for j := 14; j < 21; j++ {
 			// write the certificate to /ClientData/Period 0/FromWebserver
 			certsaved := SignedCertPool[i][j]
+			keysaved := PrivPool[i][j]
 			filename := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".crt"
+			filename2 := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".key"
 			derbytes := certsaved.Raw
 			saveCertificateToDisk(derbytes, "ClientData/Period 2/FromWebserver/"+filename)
+			saveKeyToDisk(keysaved, "ClientData/Period 2/FromWebserver/"+filename2)
 		}
 		for j := 21; j < 28; j++ {
 			// write the certificate to /ClientData/Period 0/FromWebserver
 			certsaved := SignedCertPool[i][j]
+			keysaved := PrivPool[i][j]
 			filename := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".crt"
+			filename2 := "CA " + fmt.Sprint(i) + "_" + certsaved.Subject.CommonName + "_" + fmt.Sprint(CA.GetSequenceNumberfromCert(&certsaved)) + ".key"
 			derbytes := certsaved.Raw
 			saveCertificateToDisk(derbytes, "ClientData/Period 3/FromWebserver/"+filename)
-		}
-		for k := 0; k < 28; k++ {
-			// write the private key to /ClientData/Period 0/FromWebserver
-			certsaved := SignedCertPool[i][k]
-			keysaved := PrivPool[i][k]
-			filename := certsaved.Subject.CommonName + "_private" + ".key"
-			saveKeyToDisk(keysaved, "ClientData/Period 0/FromWebserver/"+filename)
+			saveKeyToDisk(keysaved, "ClientData/Period 3/FromWebserver/"+filename2)
 		}
 	}
 }
@@ -536,7 +550,7 @@ func Test_MG_Period0(t *testing.T) {
 		REV_0 := generate_TSS_FULL(0, REVs[GID_CA[i]], gossip.REV)
 		REV_FULL[0] = append(REV_FULL[0], REV_0)
 	}
-	
+
 	// These need to be initialized to zero values, otherwise the JSON encoding will be null
 	ACC_FULL[0] = []gossip.Gossip_object{}
 	CON_FULL[0] = []gossip.Gossip_object{}

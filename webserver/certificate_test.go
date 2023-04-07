@@ -194,9 +194,9 @@ func readKeyFromDisk(filePath string) (*rsa.PrivateKey, error) {
 	return privKey, nil
 }
 
-func testLoadkeyandcert(*testing.T) {
+func TestLoadkeyandcert(*testing.T) {
 	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 1_2.crt"
-	keypath := "../client_test/ClientData/Period 0/FromWebserver/Testing Dummy 2_private.key"
+	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 1_2.key"
 	cert, err := readCertificateFromDisk(certpath)
 	if err != nil {
 		log.Fatalf("Failed to read certificate from disk: %v", err)
@@ -245,8 +245,8 @@ func loadInvalidCertificate(certbytes []byte, keybytes []byte) (*tls.Certificate
 }
 
 func TestLoadvalidcert(*testing.T) {
-	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 1_2.crt"
-	keypath := "../client_test/ClientData/Period 0/FromWebserver/Testing Dummy 2_private.key"
+	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.crt"
+	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.key"
 	cert, _ := tls.LoadX509KeyPair(certpath, keypath)
 	fmt.Println(cert)
 }

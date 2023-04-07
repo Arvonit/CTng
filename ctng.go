@@ -5,9 +5,8 @@ Code Ownership:
 Finn - Made main function
 */
 import (
-	"CTng/client"
+	//"CTng/client"
 	"CTng/logger_ca"
-	"CTng/miniclient"
 	"CTng/minimon"
 	"CTng/network"
 	"CTng/webserver"
@@ -38,8 +37,6 @@ func main() {
 		webserver.Start()
 	case "minimon":
 		minimon.Start()
-	case "miniclient":
-		miniclient.Start()
 	case "network_monitor":
 		network.StartMonitor(os.Args[2])
 	case "network_gossiper":
@@ -49,8 +46,8 @@ func main() {
 	case "network_ca":
 		network.StartCA(os.Args[2])
 	case "client":
-		ctx := client.InitializeClientContext(os.Args[2], os.Args[3])
-		client.StartClientServer(&ctx)
+		//ctx := client.InitializeClientContext(os.Args[2], os.Args[3])
+		//client.StartClientServer(&ctx)
 	default:
 		fmt.Println(helpText)
 	}
