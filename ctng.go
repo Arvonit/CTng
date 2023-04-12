@@ -8,9 +8,9 @@ import (
 	"CTng/client"
 	"CTng/logger_ca"
 	"CTng/miniclient"
-	"CTng/minimon"
 	"CTng/network"
 	"CTng/webserver"
+	"CTng/monitor"
 	"fmt"
 	"os"
 )
@@ -37,7 +37,7 @@ func main() {
 	case "web":
 		webserver.Start()
 	case "minimon":
-		minimon.Start()
+		monitor.StartMinimon()
 	case "miniclient":
 		miniclient.Start()
 	case "network_monitor":

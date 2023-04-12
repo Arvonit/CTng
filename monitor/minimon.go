@@ -1,8 +1,8 @@
-package minimon
+package monitor
 
 import (
 	"CTng/gossip"
-	"CTng/monitor"
+	// "CTng/monitor"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +12,7 @@ import (
 )
 
 // Implements a minimal monitor server. Includes endpoints to retrieve STHs, REVs, and POMs.
-func Start() {
+func StartMinimon() {
 	http.HandleFunc("/", handleClientUpdate)
 
 	// http.HandleFunc("/sth", createRequestHandler("testData/monitordata/1/STH_FULL.json"))
@@ -27,7 +27,7 @@ func Start() {
 
 func handleClientUpdate(w http.ResponseWriter, r *http.Request) {
 	// Create monitor context from sample monitor configuration
-	context := monitor.InitializeMonitorContext(
+	context := InitializeMonitorContext(
 		"Gen/monitor_testconfig/1/Monitor_public_config.json",
 		"Gen/monitor_testconfig/1/Monitor_private_config.json",
 		"Gen/monitor_testconfig/1/Monitor_crypto_config.json",
@@ -44,7 +44,7 @@ func handleClientUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the STH, POM, and REV data corresponding with the specificed period from disk
-	update, err := monitor.PrepareClientUpdate(
+	update, err := PrepareClientUpdate(
 		context,
 		"client_test/ClientData/Period "+periodStr+"/FromMonitor/ClientUpdate_at_Period "+periodStr+".json",
 	)

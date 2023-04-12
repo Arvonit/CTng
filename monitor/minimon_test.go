@@ -1,4 +1,4 @@
-package minimon
+package monitor
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TODO: Update
 func TestHandleREV(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
     // pass 'nil' as the third parameter
@@ -41,5 +42,4 @@ func TestHandleREV(t *testing.T) {
     if json.Unmarshal([]byte(response), &jsonResponse) != nil {
 		t.Errorf("Handler returned unexpected body: got \n%v", response)
 	}
-
 }

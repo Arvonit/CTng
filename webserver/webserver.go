@@ -12,7 +12,7 @@ import (
 
 // Test function to load a cert and private key from the client_test folder.
 func foo() {
-	cert, err := tls.LoadX509KeyPair("./client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.crt", "./client_test/ClientData/Period 0/FromWebserver/Testing Dummy 0_private.key")
+	cert, err := tls.LoadX509KeyPair("./client_test/ClientData/Period 3/FromWebserver/CA 2_Testing Dummy 82_27.crt", "./client_test/ClientData/Period 0/FromWebserver/Testing Dummy 27_private.key")
 	if err != nil {
 		panic(err)
 	}
