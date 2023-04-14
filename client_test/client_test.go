@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -114,20 +113,10 @@ func Test_Context_Init(t *testing.T) {
 func ca_logger_setup(Period int) {
 	fmt.Println("________________________________CA_Logger_Running_at_Period ", Period, "________________________________")
 	for i := 0; i < num_ca; i++ {
-		ncp, privmap := CA.Generate_N_Signed_PreCert_with_priv(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+21*(Period))
-		//ncp := CA.Generate_N_Signed_PreCert(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+ 21*(Period))
-		// iterate over privmap and append to PrivPool
-		//extract the keys from the map
-		keys := make([]string, 0, len(privmap))
-		for k := range privmap {
-			keys = append(keys, k)
-		}
-		//sort the keys
-		sort.Strings(keys)
-		//iterate over the keys and append the values to PrivPool
-		for _, k := range keys {
-			PrivPool[i] = append(PrivPool[i], privmap[k])
-		}
+		ncp, privlist := CA.Generate_N_Signed_PreCert_with_priv(ctx_ca[i], num_cert, host, validFor, isCA, issuers[i], ctx_ca[i].Rootcert, false, &ctx_ca[i].CA_crypto_config.RSAPrivateKey, num_cert*i+21*(Period))
+
+		//append the values to PrivPool
+		PrivPool[i] = append(PrivPool[i], privlist...)
 		Precert_pool[i] = append(Precert_pool[i], ncp...)
 		for j := 0; j < len(Precert_pool[i]); j++ {
 			ctx_ca[i].CurrentCertificatePool.AddCert(Precert_pool[i][j])
@@ -136,6 +125,8 @@ func ca_logger_setup(Period int) {
 	}
 	fmt.Println("PreCert_Pool_Length: ", ctx_ca[0].CurrentCertificatePool.GetLength(), ctx_ca[1].CurrentCertificatePool.GetLength(), ctx_ca[2].CurrentCertificatePool.GetLength())
 	fmt.Println("Sequence_Number for each CA starts at: ", CA.GetSequenceNumberfromCert(ctx_ca[0].CurrentCertificatePool.GetCertList()[0]), CA.GetSequenceNumberfromCert(ctx_ca[1].CurrentCertificatePool.GetCertList()[0]), CA.GetSequenceNumberfromCert(ctx_ca[2].CurrentCertificatePool.GetCertList()[0]))
+	fmt.Println(ctx_ca[1].CurrentCertificatePool.GetCertList()[3].PublicKey)
+	fmt.Println(PrivPool[1][3].PublicKey)
 	//fmt.Println("________________________________CA_Pre_Cert_Gen_Successful________________________________")
 	//cert 1 from all CAs logged by logger 1
 	//cert 2 from all CAs logged by logger 2

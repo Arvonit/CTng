@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
+	"strconv"
 
 	//"crypto/tls"
 	"crypto/x509"
@@ -194,9 +195,9 @@ func readKeyFromDisk(filePath string) (*rsa.PrivateKey, error) {
 	return privKey, nil
 }
 
-func TestLoadkeyandcert(*testing.T) {
-	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 1_2.crt"
-	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 1_2.key"
+func testLoadkeyandcert(*testing.T) {
+	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 1_Testing Dummy 13_7.crt"
+	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 1_Testing Dummy 13_7.key"
 	cert, err := readCertificateFromDisk(certpath)
 	if err != nil {
 		log.Fatalf("Failed to read certificate from disk: %v", err)
@@ -218,6 +219,7 @@ func TestLoadkeyandcert(*testing.T) {
 	pub := cert_new.PublicKey.(*rsa.PublicKey)
 	pub2 := key.PublicKey
 	fmt.Println(pub.N)
+	fmt.Println("__________________________________________________________________________________________________________________")
 	fmt.Println(pub2.N)
 	fmt.Println(pub.N.Cmp(pub2.N) == 0 && pub.E == pub2.E)
 
@@ -245,8 +247,18 @@ func loadInvalidCertificate(certbytes []byte, keybytes []byte) (*tls.Certificate
 }
 
 func TestLoadvalidcert(*testing.T) {
-	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.crt"
-	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.key"
-	cert, _ := tls.LoadX509KeyPair(certpath, keypath)
-	fmt.Println(cert)
+	//certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.crt"
+	//keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.key"
+	for i := 0; i < 3; i++ {
+		certpath := "../client_test/ClientData/Period 0/FromWebserver/CA " + strconv.Itoa(i) + "_Testing Dummy " + strconv.Itoa(i*7) + "_1.crt"
+		keypath := "../client_test/ClientData/Period 0/FromWebserver/CA " + strconv.Itoa(i) + "_Testing Dummy " + strconv.Itoa(i*7) + "_1.key"
+		_, err := tls.LoadX509KeyPair(certpath, keypath)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("Success")
+			//fmt.Println(cert)
+		}
+
+	}
 }

@@ -1,5 +1,9 @@
 package testData
 
+import (
+	"CTng/Gen"
+	"testing"
+)
 
 /*
 import(
@@ -59,3 +63,7 @@ func TestContextinit(t *testing.T){
 	fmt.Println(ctx_gossiper_3.Gossiper_private_config.Signer, ctx_gossiper_4.Gossiper_private_config.Signer)
 }
 */
+
+func TestGenerateall(t *testing.T) {
+	Gen.Generateall(4, 2, 1, 1, 1, 60, 60, "")
+}

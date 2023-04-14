@@ -176,15 +176,18 @@ func Generate_N_Signed_PreCert(c *CAContext, N int, host string, validFor time.D
 	return precerts
 }
 
-func Generate_N_Signed_PreCert_with_priv(c *CAContext, N int, host string, validFor time.Duration, isCA bool, issuer pkix.Name, root_cert *x509.Certificate, root bool, priv *rsa.PrivateKey, global_offset int) ([]*x509.Certificate, map[string]*rsa.PrivateKey) {
+func Generate_N_Signed_PreCert_with_priv(c *CAContext, N int, host string, validFor time.Duration, isCA bool, issuer pkix.Name, root_cert *x509.Certificate, root bool, priv *rsa.PrivateKey, global_offset int) ([]*x509.Certificate, []*rsa.PrivateKey) {
 	precerts := make([]*x509.Certificate, N)
+	certprivs := make([]*rsa.PrivateKey, N)
 	subjects := Generate_N_Subjects(N, global_offset)
 	pubkeys, privkeys := Generate_and_return_N_KeyPairs(subjects)
 	for i := 0; i < N; i++ {
 		pubkey := pubkeys[subjects[i].CommonName]
+		privkey := privkeys[subjects[i].CommonName]
 		precerts[i] = Generate_Signed_PreCert(c, host, validFor, isCA, issuer, subjects[i], root_cert, root, pubkey, priv)
+		certprivs[i] = privkey
 	}
-	return precerts, privkeys
+	return precerts, certprivs
 }
 
 // Marshall signed precert to json
