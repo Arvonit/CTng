@@ -65,5 +65,5 @@ func TestContextinit(t *testing.T){
 */
 
 func TestGenerateall(t *testing.T) {
-	Gen.Generateall(4, 2, 1, 1, 1, 60, 60, "")
+	Gen.Generateall(4, 2, 4, 4, 1, 60, 60, "")
 }

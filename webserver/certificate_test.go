@@ -1,15 +1,20 @@
 package webserver
 
 import (
-	"crypto"
+	//"crypto"
+	"CTng/CA"
+	crypto "CTng/crypto"
+	"CTng/gossip"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
+
+	//"crypto/sha256"
 	"crypto/tls"
 	"strconv"
 
 	//"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -195,9 +200,9 @@ func readKeyFromDisk(filePath string) (*rsa.PrivateKey, error) {
 	return privKey, nil
 }
 
-func testLoadkeyandcert(*testing.T) {
-	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 1_Testing Dummy 13_7.crt"
-	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 1_Testing Dummy 13_7.key"
+func TestLoadkeyandcert(*testing.T) {
+	certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.crt"
+	keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.key"
 	cert, err := readCertificateFromDisk(certpath)
 	if err != nil {
 		log.Fatalf("Failed to read certificate from disk: %v", err)
@@ -206,7 +211,7 @@ func testLoadkeyandcert(*testing.T) {
 	if err != nil {
 		log.Fatalf("Failed to read key from disk: %v", err)
 	}
-
+	//fmt.Println(key.Size())
 	//fmt.Println(cert)
 	//fmt.Println(key)
 	loadInvalidCertificate(cert, x509.MarshalPKCS1PrivateKey(key))
@@ -214,28 +219,53 @@ func testLoadkeyandcert(*testing.T) {
 	if err != nil {
 		log.Fatalf("Failed to parse certificate: %v", err)
 	}
-	fmt.Println(cert_new.Subject.CommonName)
-	//fmt.Println(cert_new.CRLDistributionPoints)
-	pub := cert_new.PublicKey.(*rsa.PublicKey)
-	pub2 := key.PublicKey
-	fmt.Println(pub.N)
-	fmt.Println("__________________________________________________________________________________________________________________")
-	fmt.Println(pub2.N)
-	fmt.Println(pub.N.Cmp(pub2.N) == 0 && pub.E == pub2.E)
-
-	msg := []byte("Hello World")
-	hash := sha256.Sum256(msg)
-	hashmsg := hash[:]
-	sig, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, hashmsg)
+	//fmt.Println(cert_new.Subject.CommonName)
+	//fmt.Println(cert_new.CRLDistributionPoints[1])
+	var CTngExtension CA.CTngExtension
+	err = json.Unmarshal([]byte(cert_new.CRLDistributionPoints[1]), &CTngExtension)
 	if err != nil {
-		log.Fatalf("Failed to sign: %v", err)
+		log.Fatalf("Failed to parse certificate: %v", err)
 	}
-	err = rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashmsg, sig)
+	var sth_example gossip.Gossip_object
+	sth_example = CTngExtension.STH
+	rsasig, err := crypto.RSASigFromString(sth_example.Signature[0])
+	if err != nil {
+		log.Fatalf("Failed to parse signature: %v", err)
+	}
+	fmt.Println(rsasig)
+	msg := []byte(sth_example.Payload[0] + sth_example.Payload[1] + sth_example.Payload[2])
+	cryptoconfig, err := crypto.ReadCryptoConfig("../client_test/logger_testconfig/1/logger_crypto_config.json")
+	if err != nil {
+		//log.Fatalf("Failed to read cryptoconfig from disk: %v", err)
+		fmt.Println(err)
+	}
+	//hash, _ := cryptoconfig.Hash(msg)
+	//hashmsg := hash[:]
+	err = cryptoconfig.Verify(msg, rsasig)
 	if err != nil {
 		log.Fatalf("Failed to verify: %v", err)
 	}
-	fmt.Println("Verified")
 
+	pub := cert_new.PublicKey.(*rsa.PublicKey)
+	pub2 := key.PublicKey
+	//fmt.Println(pub.N)
+	fmt.Println("__________________________________________________________________________________________________________________")
+	//fmt.Println(pub2.N)
+	fmt.Println(pub.N.Cmp(pub2.N) == 0 && pub.E == pub2.E)
+	/*
+		msg := []byte("Hello World")
+		hash := sha256.Sum256(msg)
+		hashmsg := hash[:]
+		sig, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, hashmsg)
+		if err != nil {
+			log.Fatalf("Failed to sign: %v", err)
+		}
+		err = rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashmsg, sig)
+		if err != nil {
+			log.Fatalf("Failed to verify: %v", err)
+		}
+	*/
+	fmt.Println("Verified")
 }
 
 func loadInvalidCertificate(certbytes []byte, keybytes []byte) (*tls.Certificate, error) {
@@ -246,7 +276,7 @@ func loadInvalidCertificate(certbytes []byte, keybytes []byte) (*tls.Certificate
 	return &invalidCert, nil
 }
 
-func TestLoadvalidcert(*testing.T) {
+func testLoadvalidcert(*testing.T) {
 	//certpath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.crt"
 	//keypath := "../client_test/ClientData/Period 0/FromWebserver/CA 0_Testing Dummy 0_1.key"
 	for i := 0; i < 3; i++ {
