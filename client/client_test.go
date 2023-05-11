@@ -1,10 +1,15 @@
 package client
 
 import (
+	"CTng/gossip"
 	"CTng/monitor"
 	"CTng/util"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/bits-and-blooms/bitset"
@@ -30,7 +35,69 @@ func TestGet_SRH_and_DCRV(t *testing.T) {
 	}
 	fmt.Println(SRHs)
 	fmt.Println(DCRVs)
+}
 
+func TestGetRootHash(t *testing.T) {
+	// Load client update file from disk
+	clientRaw, err := util.ReadByte("../client_test/ClientData/Period 0/FromMonitor/ClientUpdate_at_Period 0.json")
+	if err != nil {
+		t.Error(err)
+	}
+	var clientUpdate monitor.ClientUpdate
+	err = json.Unmarshal(clientRaw, &clientUpdate)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Extract root hashes from client update and print
+	fmt.Println("root hash:")
+	fmt.Println("[")
+	for i, rootHash := range GetRootHash(clientUpdate.STHs) {
+		fmt.Printf("%d: %s\n", i, rootHash)
+	}
+	fmt.Println("]")
+}
+
+func loadCertificate(certPath string) (*x509.Certificate, error) {
+	// Load the PEM file
+	certPEM, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decode the PEM file
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the certificate")
+	}
+
+	// Parse the certificate
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return cert, nil
+}
+
+func TestCertVerification(t *testing.T) {
+	// Load certificate from disk - period 4, ca 3
+	certPath := "../client_test/ClientData/Period 3/FromWebserver/CA 2_Testing Dummy 77_22.crt"
+	// privKeyPath := "../client_test/ClientData/Period 3/FromWebserver/CA 2_Testing Dummy 77_22.key"
+	cert, err := loadCertificate(certPath)
+	if err != nil {
+		t.Error(err)
+	}
+	
+	// Print cert issuer
+	fmt.Println(cert.Issuer)
+
+	// Period 4 cert from CA 3 should fail verification, check Google Doc
+	poms := gossip.Gossip_Storage{
+		gossip.Gossip_ID{Type:"Payload"}: []string{"CA 2", "Logger 2"},
+		// Payload: [3]string{"CA 2", "Logger 2"},
+	}
+	checkCertAgainstPOMList(*cert, &poms)
 }
 
 /*
