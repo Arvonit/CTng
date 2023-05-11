@@ -11,14 +11,14 @@ import (
 )
 
 // Runs a HTTPS web server that serves a different CTng certificate depending on the port.
-// 
-// There are a total of 84 certificates — 21 for each of the four periods. Therefore, there is 
+//
+// There are a total of 84 certificates — 21 for each of the four periods. Therefore, there is
 // a web server running on ports 8000 to 8083.
 func Start() {
 
 	certs := getCTngCertificates()
 	numCerts := len(certs)
-	fmt.Println(numCerts)
+	// fmt.Println(numCerts)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -42,8 +42,8 @@ func Start() {
 		s := servers[i]
 		go func() {
 			if err := s.ListenAndServeTLS("", ""); err != nil {
-				// log.Fatal(err)
-				fmt.Println(err)
+				log.Fatal(err)
+				// fmt.Println(err)
 			}
 		}()
 	}
@@ -54,60 +54,36 @@ func Start() {
 	}
 }
 
-// Fetch all CTng Certificates from the client_test folder. For now, it just opens the certificates
-// for period 0.
-//
-// TODO: Fix public/private key mismatch error in loading certificate
+// Fetch all CTng Certificates from the client_test folder.
 func getCTngCertificates() []tls.Certificate {
 	var out []tls.Certificate
-	// certFilesPer0 := make(map[string]string)
-	// privKeyFiles := make(map[string]string)
-	// certFilesPer0 := make(map[string]string)
-	per0 := []string{}
-	// per1 := []string{}
-	// per2 := []string{}
-	// per3 := []string{}
+	certFiles := []string{}
+	folders := []string{
+		"./client_test/ClientData/Period 0/FromWebserver",
+		"./client_test/ClientData/Period 1/FromWebserver",
+		"./client_test/ClientData/Period 2/FromWebserver",
+		"./client_test/ClientData/Period 3/FromWebserver",
+	}
 
-	folder := "./client_test/ClientData/Period 0/FromWebserver/"
-	// folders := ["./client_test/ClientData/Period 0/FromWebserver/"]
+	for _, folder := range folders {
+		filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				panic(err)
+			}
+			if filepath.Ext(d.Name()) == ".crt" {
+				certFiles = append(certFiles, strings.TrimSuffix(path, filepath.Ext(path)))
+			}
 
-	filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			panic(err)
-			// fmt.Println(err)
-		}
+			return nil
+		})
+	}
 
-		// ext := filepath.Ext(d.Name())
-		// if ext != ".crt" && ext != ".key" {
-		// 	return nil
-		// }
-		
-
-		if filepath.Ext(d.Name()) == ".crt" {
-			per0 = append(per0, strings.TrimSuffix(path, filepath.Ext(path)))
-		}
-
-		// TODO: Remove name split
-
-		// parts := strings.Split(path, "/")
-		// fileName := parts[len(parts)-1]
-		// if filepath.Ext(d.Name()) == ".crt" {
-		// 	name := strings.Split(fileName, "_")[1]
-		// 	certFilesPer0[name] = path
-		// } else if filepath.Ext(d.Name()) == ".key" {
-		// 	name := strings.Split(fileName, "_")[0]
-		// 	privKeyFiles[name] = path
-		// }
-
-		return nil
-	})
-
-	for _, fileName := range per0 {
+	for _, fileName := range certFiles {
 		cert, err := tls.LoadX509KeyPair(fileName+".crt", fileName+".key")
 		if err != nil {
-			// panic(err)
-			fmt.Println(fileName)
-			fmt.Println(err)
+			// fmt.Println(fileName)
+			// fmt.Println(err)
+			panic(err)
 		}
 		out = append(out, cert)
 	}
