@@ -6,6 +6,7 @@ Finn - Made main function
 */
 import (
 	//"CTng/client"
+	"CTng/client"
 	"CTng/logger_ca"
 	"CTng/minimon"
 	"CTng/network"
@@ -48,6 +49,7 @@ func main() {
 	case "client":
 		//ctx := client.InitializeClientContext(os.Args[2], os.Args[3])
 		//client.StartClientServer(&ctx)
+		client.Start()
 	default:
 		fmt.Println(helpText)
 	}

@@ -28,3 +28,15 @@ func IsOwner(ownerURL string, parsedURL string) bool {
 	}
 	return ownerURL == parsedURL
 }
+
+// From: https://zetcode.com/golang/filter-map/
+// Map-esque function in go
+func Map[T interface{}, V interface{}](data []T, f func(T) V) []V {
+    mapped := make([]V, len(data))
+
+    for i, e := range data {
+        mapped[i] = f(e)
+    }
+
+    return mapped
+}
