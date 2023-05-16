@@ -2,15 +2,101 @@ package webserver
 
 import (
 	"crypto/tls"
+	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
+// Runs a HTTPS web server that serves a different CTng certificate depending on the port.
+//
+// There are a total of 84 certificates — 21 for each of the four periods. Therefore, there is
+// a web server running on ports 8000 to 8083.
+func Start() {
+
+	certs := getCTngCertificates()
+	numCerts := len(certs)
+	// fmt.Println(numCerts)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Welcome to the CTng web server!"))
+	})
+
+	var servers []http.Server
+	for i := 0; i < numCerts; i++ {
+		servers = append(servers, http.Server{
+			Addr: fmt.Sprintf("localhost:8%03d", i),
+			TLSConfig: &tls.Config{
+				Certificates: []tls.Certificate{certs[i]},
+			},
+			Handler: mux,
+		})
+	}
+
+	log.Printf("Listening on ports {8000...8%03d}\n", numCerts-1)
+	for i := 1; i < numCerts; i++ {
+		// fmt.Println(servers[i].Addr)
+		s := servers[i]
+		go func() {
+			if err := s.ListenAndServeTLS("", ""); err != nil {
+				log.Fatal(err)
+				// fmt.Println(err)
+			}
+		}()
+	}
+
+	// fmt.Println(servers[0].Addr)
+	if err := servers[0].ListenAndServeTLS("", ""); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Fetch all CTng Certificates from the client_test folder.
+func getCTngCertificates() []tls.Certificate {
+	var out []tls.Certificate
+	certFiles := []string{}
+	folders := []string{
+		"./client_test/ClientData/Period 0/FromWebserver",
+		"./client_test/ClientData/Period 1/FromWebserver",
+		"./client_test/ClientData/Period 2/FromWebserver",
+		"./client_test/ClientData/Period 3/FromWebserver",
+	}
+
+	for _, folder := range folders {
+		filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				panic(err)
+			}
+			if filepath.Ext(d.Name()) == ".crt" {
+				certFiles = append(certFiles, strings.TrimSuffix(path, filepath.Ext(path)))
+			}
+
+			return nil
+		})
+	}
+
+	for _, fileName := range certFiles {
+		cert, err := tls.LoadX509KeyPair(fileName+".crt", fileName+".key")
+		if err != nil {
+			// fmt.Println(fileName)
+			// fmt.Println(err)
+			panic(err)
+		}
+		out = append(out, cert)
+	}
+
+	return out
+}
+
+// Deprecated:
 // Run a HTTPS web server that returns a different type of CTng certificate depending on the port:
 // 1. A normal, valid certificate on port 8000
 // 2. A revoked certificate on port 8001
 // 3. A certificate from an entity that has a proof of misbehavior (POM) against them on port 8002
-func Start() {
+func StartOld() {
 	normalCert, revokedCert, pomCert := getCertificates()
 
 	normalMux := http.NewServeMux()
@@ -66,6 +152,7 @@ func Start() {
 	}
 }
 
+// Deprecated:
 // Get the certificates to be used by the server
 func getCertificates() (tls.Certificate, tls.Certificate, tls.Certificate) {
 	normalCert, err := tls.LoadX509KeyPair("webserver/test/normal.crt", "webserver/test/normal.key")
